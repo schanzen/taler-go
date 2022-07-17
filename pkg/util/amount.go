@@ -106,6 +106,10 @@ func ParseAmount(s string) (*Amount,error) {
   return &a, nil
 }
 
+func (a *Amount) IsZero() bool {
+  return (a.Value == 0) && (a.Fraction == 0)
+}
+
 func (a *Amount) String() string {
   v := strconv.FormatUint(a.Value, 10)
   if a.Fraction != 0 {
