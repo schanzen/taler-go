@@ -28,7 +28,7 @@ import(
   "strings"
 )
 
-// The GNU Taler Amount ob
+// The GNU Taler Amount object
 type Amount struct {
 
   // The type of currency, e.g. EUR
@@ -41,12 +41,16 @@ type Amount struct {
   Fraction uint64
 }
 
+// The maximim length of a fraction (in digits)
 const FractionalLength = 8
 
+// The base of the fraction.
 const FractionalBase = 1e8
 
+// The maximum value
 var MaxAmountValue = uint64(math.Pow(2, 52))
 
+// Create a new amount from value and fraction in a currency
 func NewAmount(currency string, value uint64, fraction uint64) Amount {
   return Amount{
     Currency: currency,
@@ -55,6 +59,8 @@ func NewAmount(currency string, value uint64, fraction uint64) Amount {
   }
 }
 
+// Subtract the amount b from a and return the result.
+// a and b must be of the same currency and a >= b
 func (a *Amount) Sub(b Amount) (*Amount,error) {
   if a.Currency != b.Currency {
     return nil, errors.New("Currency mismatch!")
@@ -78,6 +84,9 @@ func (a *Amount) Sub(b Amount) (*Amount,error) {
   return &r, nil
 }
 
+// Add b to a and return the result.
+// Returns an error if the currencies do not match or the addition would
+// cause an overflow of the value
 func (a *Amount) Add(b Amount) (*Amount,error) {
   if a.Currency != b.Currency {
     return nil, errors.New("Currency mismatch!")
@@ -97,6 +106,8 @@ func (a *Amount) Add(b Amount) (*Amount,error) {
   }
   return &r, nil
 }
+
+// Parses an amount string in the format <currency>:<value>[.<fraction>]
 func ParseAmount(s string) (*Amount,error) {
   re, err := regexp.Compile(`^\s*([-_*A-Za-z0-9]+):([0-9]+)\.?([0-9]+)?\s*$`)
   parsed := re.FindStringSubmatch(s)
@@ -125,10 +136,13 @@ func ParseAmount(s string) (*Amount,error) {
   return &a, nil
 }
 
+// Check if this amount is zero
 func (a *Amount) IsZero() bool {
   return (a.Value == 0) && (a.Fraction == 0)
 }
 
+// Returns the string representation of the amount: <currency>:<value>[.<fraction>]
+// Omits trailing zeroes.
 func (a *Amount) String() string {
   v := strconv.FormatUint(a.Value, 10)
   if a.Fraction != 0 {
