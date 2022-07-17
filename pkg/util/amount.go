@@ -68,7 +68,7 @@ func (a *Amount) Add(b Amount) (*Amount,error) {
   uint64(math.Floor((float64(a.Fraction) + float64(b.Fraction)) / FractionalBase))
 
   if v >= MaxAmountValue {
-    return nil, errors.New("Amount Overflow!")
+    return nil, errors.New(fmt.Sprintf("Amount Overflow (%d > %d)!", v, MaxAmountValue))
   }
   f := uint64((a.Fraction + b.Fraction) % FractionalBase)
   r := Amount{

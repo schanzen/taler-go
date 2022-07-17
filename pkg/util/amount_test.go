@@ -2,6 +2,7 @@ package util
 
 import (
   "testing"
+  "fmt"
 )
 
 var a = Amount{
@@ -43,8 +44,11 @@ func TestAmountSub(t *testing.T) {
   }
 }
 
-func TestAmountString(t *testing.T) {
-  if c.String() != "EUR:25.20007" {
-    t.Errorf("Failed to generate correct string")
+func TestAmountLarge(t *testing.T) {
+  x, err := ParseAmount("EUR:50")
+  _, err = x.Add(a)
+  if nil != err {
+    fmt.Println(err)
+    t.Errorf("Failed")
   }
 }
