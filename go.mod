@@ -1,3 +1,3 @@
-module taler.net/taler-util
+module taler.net/taler-util.git
 
 go 1.18
