@@ -26,7 +26,7 @@ const FractionalLength = 8
 
 const FractionalBase = 1e8
 
-const MaxAmountValue = 2^52
+var MaxAmountValue = uint64(math.Pow(2, 52))
 
 func NewAmount(currency string, value uint64, fraction uint64) Amount {
   return Amount{
