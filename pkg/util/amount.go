@@ -1,4 +1,4 @@
-package taler
+package util
 
 import(
   "errors"
