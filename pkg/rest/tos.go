@@ -12,7 +12,7 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-func ServiceTermsResponse(s ini.Section, w http.ResponseWriter, r *http.Request) {
+func ServiceTermsResponse(s *ini.Section, w http.ResponseWriter, r *http.Request) {
 	fileType := s.Key("default_doc_filetype").MustString("text/html")
 	termsLocation := s.Key("default_tos_path").MustString("terms/")
 	for _, typ := range r.Header["Accept"] {
