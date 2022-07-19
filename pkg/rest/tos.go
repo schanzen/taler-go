@@ -55,7 +55,7 @@ func ServiceTermsResponse(s *ini.Section, w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusNotFound)
 }
 
-func ServicePrivacyPolicyResponse(s *ini.Section, w http.ResponseWriter, r *http.Request) {
+func PrivacyPolicyResponse(s *ini.Section, w http.ResponseWriter, r *http.Request) {
 	fileType := s.Key("default_doc_filetype").MustString("text/html")
 	termsLocation := s.Key("default_pp_path").MustString("privacy/")
 	for _, typ := range r.Header["Accept"] {
