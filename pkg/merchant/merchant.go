@@ -14,7 +14,7 @@ import (
 type PostOrderRequest struct {
 	// The order must at least contain the minimal
 	// order detail, but can override all.
-	order MinimalOrderDetail `json:"order"`
+	Order MinimalOrderDetail `json:"order"`
 
 	// If set, the backend will then set the refund deadline to the current
 	// time plus the specified delay.  If it's not set, refunds will not be
@@ -149,13 +149,13 @@ func (m *Merchant) AddNewOrder(cost util.Amount, summary string, fulfillment_url
 	// FIXME get from cfg
 	orderDetail.Summary = summary
 	orderDetail.FulfillmentUrl = fulfillment_url
-	newOrder.order = orderDetail
+	newOrder.Order = orderDetail
 	reqString, err := json.Marshal(newOrder)
 	if nil != err {
 		return "", err
 	}
 	client := &http.Client{}
-	req, _ := http.NewRequest("POST", m.BaseUrlPrivate+"/private/orders", bytes.NewReader(reqString))
+	req, _ := http.NewRequest(http.MethodPost, m.BaseUrlPrivate+"/private/orders", bytes.NewReader(reqString))
 	req.Header.Set("Authorization", "Bearer secret-token:"+m.AccessToken)
 	resp, err := client.Do(req)
 
