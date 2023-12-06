@@ -152,7 +152,7 @@ func (m *Merchant) AddNewOrder(cost util.Amount, summary string, fulfillment_url
 	newOrder.order = orderDetail
 	reqString, _ := json.Marshal(newOrder)
 	client := &http.Client{}
-	req, _ := http.NewRequest("POST", m.BaseUrlPrivate+"/private/orders", bytes.NewBuffer(reqString))
+	req, _ := http.NewRequest("POST", m.BaseUrlPrivate+"/private/orders", bytes.NewReader(reqString))
 	req.Header.Set("Authorization", "Bearer secret-token:"+m.AccessToken)
 	resp, err := client.Do(req)
 
@@ -161,7 +161,7 @@ func (m *Merchant) AddNewOrder(cost util.Amount, summary string, fulfillment_url
 	}
 	defer resp.Body.Close()
 	if http.StatusOK != resp.StatusCode {
-		message := fmt.Sprintf("Expected response code %d. Got %d", http.StatusOK, resp.StatusCode)
+		message := fmt.Sprintf("Expected response code %d. Got %d. With request %s", http.StatusOK, resp.StatusCode, reqString)
 		return "", errors.New(message)
 	}
 	err = json.NewDecoder(resp.Body).Decode(&orderResponse)
