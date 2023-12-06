@@ -113,6 +113,7 @@ func (m *Merchant) IsOrderPaid(orderId string) (string, error) {
 	req, _ := http.NewRequest("GET", m.BaseUrlPrivate+"/private/orders/"+orderId, nil)
 	req.Header.Set("Authorization", "secret-token:"+m.AccessToken)
 	resp, err := client.Do(req)
+	fmt.Println(req)
 	if nil != err {
 		return "", err
 	}
