@@ -109,7 +109,10 @@ func NewMerchant(merchBaseUrlPrivate string, merchAccessToken string) Merchant {
 func (m *Merchant) IsOrderPaid(orderId string) (string, error) {
 	var orderPaidResponse CheckPaymentStatusResponse
 	var paytoResponse CheckPaymentPaytoResponse
-	resp, err := http.Get(m.BaseUrlPrivate + "/private/orders/" + orderId)
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", m.BaseUrlPrivate+"/private/orders/"+orderId, nil)
+	req.Header.Set("Authorization", "secret-token:"+m.AccessToken)
+	resp, err := client.Do(req)
 	if nil != err {
 		return "", err
 	}
@@ -142,7 +145,10 @@ func (m *Merchant) AddNewOrder(cost util.Amount) (string, error) {
 	orderDetail.Summary = "This is an order to a TalDir registration"
 	newOrder.order = orderDetail
 	reqString, _ := json.Marshal(newOrder)
-	resp, err := http.Post(m.BaseUrlPrivate+"/private/orders", "application/json", bytes.NewBuffer(reqString))
+	client := &http.Client{}
+	req, _ := http.NewRequest("POST", m.BaseUrlPrivate+"/private/orders", bytes.NewBuffer(reqString))
+	req.Header.Set("Authorization", "secret-token:"+m.AccessToken)
+	resp, err := client.Do(req)
 
 	if nil != err {
 		return "", err
