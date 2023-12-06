@@ -51,10 +51,14 @@ type PostOrderRequest struct {
 
 type MinimalOrderDetail struct {
 	// Amount to be paid by the customer.
-	Amount string
+	Amount string `json:"amount"`
 
 	// Short summary of the order.
-	Summary string
+	Summary string `json:"summary"`
+
+	// See documentation of fulfillment_url in ContractTerms.
+	// Either fulfillment_url or fulfillment_message must be specified.
+	FulfillmentUrl string `json:"fulfillment_url,omitempty"`
 }
 
 // NOTE: Part of the above but optional
@@ -137,13 +141,14 @@ func (m *Merchant) IsOrderPaid(orderId string) (string, error) {
 	return "", nil
 }
 
-func (m *Merchant) AddNewOrder(cost util.Amount) (string, error) {
+func (m *Merchant) AddNewOrder(cost util.Amount, summary string, fulfillment_url string) (string, error) {
 	var newOrder PostOrderRequest
 	var orderDetail MinimalOrderDetail
 	var orderResponse PostOrderResponse
 	orderDetail.Amount = cost.String()
 	// FIXME get from cfg
-	orderDetail.Summary = "This is an order to a TalDir registration"
+	orderDetail.Summary = summary
+	orderDetail.FulfillmentUrl = fulfillment_url
 	newOrder.order = orderDetail
 	reqString, _ := json.Marshal(newOrder)
 	client := &http.Client{}
