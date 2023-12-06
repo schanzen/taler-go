@@ -14,7 +14,7 @@ import (
 type PostOrderRequest struct {
 	// The order must at least contain the minimal
 	// order detail, but can override all.
-	order MinimalOrderDetail
+	order MinimalOrderDetail `json:"order"`
 
 	// If set, the backend will then set the refund deadline to the current
 	// time plus the specified delay.  If it's not set, refunds will not be
@@ -40,7 +40,7 @@ type PostOrderRequest struct {
 	// be used in case different UUIDs were used for different
 	// products (i.e. in case the user started with multiple
 	// shopping sessions that were combined during checkout).
-	LockUuids []string `json:"lock_uuids"`
+	LockUuids []string `json:"lock_uuids,omitempty"`
 
 	// Should a token for claiming the order be generated?
 	// False can make sense if the ORDER_ID is sufficiently
@@ -58,7 +58,7 @@ type MinimalOrderDetail struct {
 
 	// See documentation of fulfillment_url in ContractTerms.
 	// Either fulfillment_url or fulfillment_message must be specified.
-	FulfillmentUrl string `json:"fulfillment_url,omitempty"`
+	FulfillmentUrl string `json:"fulfillment_url"`
 }
 
 // NOTE: Part of the above but optional
