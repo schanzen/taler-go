@@ -111,7 +111,7 @@ func (m *Merchant) IsOrderPaid(orderId string) (string, error) {
 	var paytoResponse CheckPaymentPaytoResponse
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", m.BaseUrlPrivate+"/private/orders/"+orderId, nil)
-	req.Header.Set("Authorization", "secret-token:"+m.AccessToken)
+	req.Header.Set("Authorization", "Bearer secret-token:"+m.AccessToken)
 	resp, err := client.Do(req)
 	fmt.Println(req)
 	if nil != err {
@@ -148,7 +148,7 @@ func (m *Merchant) AddNewOrder(cost util.Amount) (string, error) {
 	reqString, _ := json.Marshal(newOrder)
 	client := &http.Client{}
 	req, _ := http.NewRequest("POST", m.BaseUrlPrivate+"/private/orders", bytes.NewBuffer(reqString))
-	req.Header.Set("Authorization", "secret-token:"+m.AccessToken)
+	req.Header.Set("Authorization", "Bearer secret-token:"+m.AccessToken)
 	resp, err := client.Do(req)
 
 	if nil != err {
