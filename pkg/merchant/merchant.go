@@ -150,7 +150,10 @@ func (m *Merchant) AddNewOrder(cost util.Amount, summary string, fulfillment_url
 	orderDetail.Summary = summary
 	orderDetail.FulfillmentUrl = fulfillment_url
 	newOrder.order = orderDetail
-	reqString, _ := json.Marshal(newOrder)
+	reqString, err := json.Marshal(newOrder)
+	if nil != err {
+		return "", err
+	}
 	client := &http.Client{}
 	req, _ := http.NewRequest("POST", m.BaseUrlPrivate+"/private/orders", bytes.NewReader(reqString))
 	req.Header.Set("Authorization", "Bearer secret-token:"+m.AccessToken)
