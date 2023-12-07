@@ -1,4 +1,4 @@
-module taler.net/taler-go.git
+module git.taler.net/taler-go.git
 
 go 1.18
 
