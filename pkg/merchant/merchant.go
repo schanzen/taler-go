@@ -8,7 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"taler.net/taler-go.git/pkg/util"
+	"github.com/schanzen/taler-go/pkg/util"
 )
 
 type PostOrderRequest struct {
