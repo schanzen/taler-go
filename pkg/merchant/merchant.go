@@ -110,7 +110,7 @@ func NewMerchant(merchBaseUrlPrivate string, merchAccessToken string) Merchant {
 	}
 }
 
-func (m *Merchant) IsOrderPaid(orderId string) (string, error) {
+func (m *Merchant) IsOrderPaid(orderId string) (int,  string, error) {
 	var orderPaidResponse CheckPaymentStatusResponse
 	var paytoResponse CheckPaymentPaytoResponse
 	client := &http.Client{}
@@ -119,26 +119,26 @@ func (m *Merchant) IsOrderPaid(orderId string) (string, error) {
 	resp, err := client.Do(req)
 	fmt.Println(req)
 	if nil != err {
-		return "", err
+		return resp.StatusCode, "", err
 	}
 	defer resp.Body.Close()
 	if http.StatusOK != resp.StatusCode {
 		message := fmt.Sprintf("Expected response code %d. Got %d", http.StatusOK, resp.StatusCode)
-		return "", errors.New(message)
+		return resp.StatusCode, "", errors.New(message)
 	}
 	respData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return resp.StatusCode, "", err
 	}
 	err = json.NewDecoder(bytes.NewReader(respData)).Decode(&orderPaidResponse)
 	if err != nil {
-		return "", err
+		return resp.StatusCode, "", err
 	}
 	if orderPaidResponse.OrderStatus != "paid" {
 		err = json.NewDecoder(bytes.NewReader(respData)).Decode(&paytoResponse)
-		return paytoResponse.TalerPayUri, err
+		return resp.StatusCode, paytoResponse.TalerPayUri, err
 	}
-	return "", nil
+	return resp.StatusCode, "", nil
 }
 
 func (m *Merchant) AddNewOrder(cost util.Amount, summary string, fulfillment_url string) (string, error) {
