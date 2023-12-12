@@ -27,6 +27,28 @@ import (
 	"strings"
 )
 
+// The DD51 currency specification for formatting
+type CurrencySpecification struct {
+	// e.g. “Japanese Yen” or "Bitcoin (Mainnet)"
+	Name string
+
+	// how many digits the user may enter after the decimal separator
+	NumFractionalInputDigits uint
+
+	// €,$,£: 2; some arabic currencies: 3, ¥: 0
+	NumFractionalNormalDigits uint
+
+	// usually same as fractionalNormalDigits, but e.g. might be 2 for ¥
+	NumFractionalTrailingZeroDigits uint
+
+	// map of powers of 10 to alternative currency names / symbols,
+	// must always have an entry under "0" that defines the base name,
+	// e.g.  "0 : €" or "3 : k€". For BTC, would be "0 : BTC, -3 : mBTC".
+	// This way, we can also communicate the currency symbol to be used.
+	AllUnitNames map[int]string
+	
+}
+
 // The GNU Taler Amount object
 type Amount struct {
 
@@ -56,6 +78,14 @@ func NewAmount(currency string, value uint64, fraction uint64) Amount {
 		Value:    value,
 		Fraction: fraction,
 	}
+}
+
+// FIXME also use allUnitNames.
+func (a *Amount) Format(cf CurrencySpecification) string {
+        if cf.NumFractionalNormalDigits == 0 {
+		return fmt.Sprintf("%s %d", cf.AllUnitNames[0], a.Value)
+	}
+	return fmt.Sprintf("%s %d.%0*d", cf.AllUnitNames[0], a.Value, cf.NumFractionalNormalDigits, a.Fraction/1e6)
 }
 
 // Subtract the amount b from a and return the result.
