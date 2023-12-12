@@ -49,6 +49,41 @@ type CurrencySpecification struct {
 	
 }
 
+var Currencies = map[string]CurrencySpecification {
+	"KUDOS": CurrencySpecification{
+		Name: "KUDOS",
+		NumFractionalInputDigits: 2,
+		NumFractionalNormalDigits: 2,
+		AllUnitNames: map[int]string{
+			0: "KUDOS",
+		},
+	},
+	"USD": CurrencySpecification{
+		Name: "US Dollar",
+		NumFractionalInputDigits: 2,
+		NumFractionalNormalDigits: 2,
+		AllUnitNames: map[int]string{
+			0: "$",
+		},
+	},
+	"EUR": CurrencySpecification{
+		Name: "Euro",
+		NumFractionalInputDigits: 2,
+		NumFractionalNormalDigits: 2,
+		AllUnitNames: map[int]string{
+			0: "€",
+		},
+	},
+	"JPY": CurrencySpecification{
+		Name: "Japanese Yen",
+		NumFractionalInputDigits: 2,
+		NumFractionalNormalDigits: 0,
+		AllUnitNames: map[int]string{
+			0: "¥",
+		},
+	},
+}
+
 // The GNU Taler Amount object
 type Amount struct {
 
@@ -81,11 +116,20 @@ func NewAmount(currency string, value uint64, fraction uint64) Amount {
 }
 
 // FIXME also use allUnitNames.
-func (a *Amount) Format(cf CurrencySpecification) string {
-        if cf.NumFractionalNormalDigits == 0 {
-		return fmt.Sprintf("%s %d", cf.AllUnitNames[0], a.Value)
+func (a *Amount) FormatWithCurrencySpecification(cf CurrencySpecification) (string, error) {
+	
+	if cf.NumFractionalNormalDigits == 0 {
+		return fmt.Sprintf("%s %d", cf.AllUnitNames[0], a.Value), nil
 	}
-	return fmt.Sprintf("%s %d.%0*d", cf.AllUnitNames[0], a.Value, cf.NumFractionalNormalDigits, a.Fraction/1e6)
+	return fmt.Sprintf("%s %d.%0*d", cf.AllUnitNames[0], a.Value, cf.NumFractionalNormalDigits, a.Fraction/1e6), nil
+}
+
+func (a *Amount) Format() (string,error) {
+	cf, idx := Currencies[a.Currency]
+	if idx {
+		return a.FormatWithCurrencySpecification(cf)
+	}
+	return "", errors.New("No currency specification found for " + a.Currency)
 }
 
 // Subtract the amount b from a and return the result.

@@ -62,15 +62,26 @@ func TestAmountFormat(t *testing.T) {
 		},
 	}
 	x, _ := ParseAmount("KUDOS:50.2")
-	str := x.Format(currencySpec)
+	str, _ := x.FormatWithCurrencySpecification(currencySpec)
 	if str != "K 50.20" {
 		fmt.Println(str)
 		t.Errorf("Failed")	
 	}
 	y, _ := ParseAmount("KUDOS:50.234")
-	str = y.Format(currencySpec)
-	if str != "K 50.23" {
+	str, _ = y.Format()
+	if str != "KUDOS 50.23" {
 		fmt.Println(str)
+		t.Errorf("Failed")	
+	}
+	y, _ = ParseAmount("EUR:50.234")
+	str, _ = y.Format()
+	if str != "€ 50.23" {
+		fmt.Println(str)
+		t.Errorf("Failed")	
+	}
+	y, _ = ParseAmount("FOO:50.234")
+	_, err := y.Format()
+	if nil == err {
 		t.Errorf("Failed")	
 	}
 }
