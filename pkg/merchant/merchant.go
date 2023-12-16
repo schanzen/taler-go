@@ -16,7 +16,7 @@ type MerchantConfig struct{
 	Currency string `json:"currency"`
 
 	// Supported currencies
-	Currencies []util.CurrencySpecification `json:"currencies"`
+	Currencies map[string]util.CurrencySpecification `json:"currencies"`
 
 	// Name
 	Name string `json:"name"`
@@ -178,4 +178,34 @@ func (m *Merchant) GetConfig() (*MerchantConfig, error) {
 		return nil, err
 	}
 	return &configResponse, nil
+}
+
+func (m *Merchant) AddNewOrder(cost util.Amount, summary string, fulfillment_url string) (string, error) {
+	var newOrder PostOrderRequest
+	var orderDetail MinimalOrderDetail
+	var orderResponse PostOrderResponse
+	orderDetail.Amount = cost.String()
+	// FIXME get from cfg
+	orderDetail.Summary = summary
+	orderDetail.FulfillmentUrl = fulfillment_url
+	newOrder.Order = orderDetail
+	reqString, err := json.Marshal(newOrder)
+	if nil != err {
+		return "", err
+	}
+	client := &http.Client{}
+	req, _ := http.NewRequest(http.MethodPost, m.BaseUrlPrivate+"/private/orders", bytes.NewReader(reqString))
+	req.Header.Set("Authorization", "Bearer secret-token:"+m.AccessToken)
+	resp, err := client.Do(req)
+
+	if nil != err {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if http.StatusOK != resp.StatusCode {
+		message := fmt.Sprintf("Expected response code %d. Got %d. With request %s", http.StatusOK, resp.StatusCode, reqString)
+		return "", errors.New(message)
+	}
+	err = json.NewDecoder(resp.Body).Decode(&orderResponse)
+	return orderResponse.OrderId, err
 }
