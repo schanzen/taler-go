@@ -48,7 +48,7 @@ type CurrencySpecification struct {
 	// must always have an entry under "0" that defines the base name,
 	// e.g.  "0 : €" or "3 : k€". For BTC, would be "0 : BTC, -3 : mBTC".
 	// This way, we can also communicate the currency symbol to be used.
-  AllUnitNames map[int]string `json:"all_unit_names"`
+  AltUnitNames map[int]string `json:"alt_unit_names"`
 }
 
 var Currencies = map[string]CurrencySpecification {
@@ -56,7 +56,7 @@ var Currencies = map[string]CurrencySpecification {
 		Name: "KUDOS",
 		NumFractionalInputDigits: 2,
 		NumFractionalNormalDigits: 2,
-		AllUnitNames: map[int]string{
+		AltUnitNames: map[int]string{
 			0: "KUDOS",
 		},
 	},
@@ -64,7 +64,7 @@ var Currencies = map[string]CurrencySpecification {
 		Name: "US Dollar",
 		NumFractionalInputDigits: 2,
 		NumFractionalNormalDigits: 2,
-		AllUnitNames: map[int]string{
+		AltUnitNames: map[int]string{
 			0: "$",
 		},
 	},
@@ -72,7 +72,7 @@ var Currencies = map[string]CurrencySpecification {
 		Name: "Euro",
 		NumFractionalInputDigits: 2,
 		NumFractionalNormalDigits: 2,
-		AllUnitNames: map[int]string{
+		AltUnitNames: map[int]string{
 			0: "€",
 		},
 	},
@@ -80,7 +80,7 @@ var Currencies = map[string]CurrencySpecification {
 		Name: "Japanese Yen",
 		NumFractionalInputDigits: 2,
 		NumFractionalNormalDigits: 0,
-		AllUnitNames: map[int]string{
+		AltUnitNames: map[int]string{
 			0: "¥",
 		},
 	},
@@ -121,9 +121,9 @@ func NewAmount(currency string, value uint64, fraction uint64) Amount {
 func (a *Amount) FormatWithCurrencySpecification(cf CurrencySpecification) (string, error) {
 	
 	if cf.NumFractionalNormalDigits == 0 {
-		return fmt.Sprintf("%s %d", cf.AllUnitNames[0], a.Value), nil
+		return fmt.Sprintf("%s %d", cf.AltUnitNames[0], a.Value), nil
 	}
-	return fmt.Sprintf("%s %d.%0*d", cf.AllUnitNames[0], a.Value, cf.NumFractionalNormalDigits, a.Fraction/1e6), nil
+	return fmt.Sprintf("%s %d.%0*d", cf.AltUnitNames[0], a.Value, cf.NumFractionalNormalDigits, a.Fraction/1e6), nil
 }
 
 func (a *Amount) Format() (string,error) {
