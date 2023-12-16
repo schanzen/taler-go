@@ -30,23 +30,25 @@ import (
 // The DD51 currency specification for formatting
 type CurrencySpecification struct {
 	// e.g. “Japanese Yen” or "Bitcoin (Mainnet)"
-	Name string
+  Name string `json:"name"`
+
+  // Currency
+  Currency string `json:"currency"`
 
 	// how many digits the user may enter after the decimal separator
-	NumFractionalInputDigits uint
+  NumFractionalInputDigits uint `json:"num_fractional_input_digits"`
 
 	// €,$,£: 2; some arabic currencies: 3, ¥: 0
-	NumFractionalNormalDigits uint
+  NumFractionalNormalDigits uint `json:"num_fractional_normal_digits"`
 
 	// usually same as fractionalNormalDigits, but e.g. might be 2 for ¥
-	NumFractionalTrailingZeroDigits uint
+  NumFractionalTrailingZeroDigits uint `json:"num_fractional_trailing_zero_digits"`
 
 	// map of powers of 10 to alternative currency names / symbols,
 	// must always have an entry under "0" that defines the base name,
 	// e.g.  "0 : €" or "3 : k€". For BTC, would be "0 : BTC, -3 : mBTC".
 	// This way, we can also communicate the currency symbol to be used.
-	AllUnitNames map[int]string
-	
+  AllUnitNames map[int]string `json:"all_unit_names"`
 }
 
 var Currencies = map[string]CurrencySpecification {

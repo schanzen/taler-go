@@ -11,6 +11,20 @@ import (
 	"github.com/schanzen/taler-go/pkg/util"
 )
 
+type MerchantConfig struct{
+	// Default currency
+	Currency string `json:"currency"`
+
+	// Supported currencies
+	Currencies []util.CurrencySpecification `json:"currencies"`
+
+	// Name
+	Name string `json:"name"`
+
+	// Version string
+	Version string `json:"version"`
+}
+
 type PostOrderRequest struct {
 	// The order must at least contain the minimal
 	// order detail, but can override all.
@@ -141,32 +155,27 @@ func (m *Merchant) IsOrderPaid(orderId string) (int,  string, error) {
 	return resp.StatusCode, "", nil
 }
 
-func (m *Merchant) AddNewOrder(cost util.Amount, summary string, fulfillment_url string) (string, error) {
-	var newOrder PostOrderRequest
-	var orderDetail MinimalOrderDetail
-	var orderResponse PostOrderResponse
-	orderDetail.Amount = cost.String()
-	// FIXME get from cfg
-	orderDetail.Summary = summary
-	orderDetail.FulfillmentUrl = fulfillment_url
-	newOrder.Order = orderDetail
-	reqString, err := json.Marshal(newOrder)
-	if nil != err {
-		return "", err
-	}
+func (m *Merchant) GetConfig() (*MerchantConfig, error) {
+	var configResponse MerchantConfig
 	client := &http.Client{}
-	req, _ := http.NewRequest(http.MethodPost, m.BaseUrlPrivate+"/private/orders", bytes.NewReader(reqString))
-	req.Header.Set("Authorization", "Bearer secret-token:"+m.AccessToken)
+	req, _ := http.NewRequest("GET", m.BaseUrlPrivate+"/config", nil)
 	resp, err := client.Do(req)
-
+	fmt.Println(req)
 	if nil != err {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	if http.StatusOK != resp.StatusCode {
-		message := fmt.Sprintf("Expected response code %d. Got %d. With request %s", http.StatusOK, resp.StatusCode, reqString)
-		return "", errors.New(message)
+		message := fmt.Sprintf("Expected response code %d. Got %d", http.StatusOK, resp.StatusCode)
+		return nil, errors.New(message)
 	}
-	err = json.NewDecoder(resp.Body).Decode(&orderResponse)
-	return orderResponse.OrderId, err
+	respData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	err = json.NewDecoder(bytes.NewReader(respData)).Decode(&configResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &configResponse, nil
 }
