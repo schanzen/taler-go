@@ -30,55 +30,55 @@ import (
 // The DD51 currency specification for formatting
 type CurrencySpecification struct {
 	// e.g. “Japanese Yen” or "Bitcoin (Mainnet)"
-  Name string `json:"name"`
+	Name string `json:"name"`
 
-  // Currency
-  Currency string `json:"currency"`
+	// Currency
+	Currency string `json:"currency"`
 
 	// how many digits the user may enter after the decimal separator
-  NumFractionalInputDigits uint `json:"num_fractional_input_digits"`
+	NumFractionalInputDigits uint `json:"num_fractional_input_digits"`
 
 	// €,$,£: 2; some arabic currencies: 3, ¥: 0
-  NumFractionalNormalDigits uint `json:"num_fractional_normal_digits"`
+	NumFractionalNormalDigits uint `json:"num_fractional_normal_digits"`
 
 	// usually same as fractionalNormalDigits, but e.g. might be 2 for ¥
-  NumFractionalTrailingZeroDigits uint `json:"num_fractional_trailing_zero_digits"`
+	NumFractionalTrailingZeroDigits uint `json:"num_fractional_trailing_zero_digits"`
 
 	// map of powers of 10 to alternative currency names / symbols,
 	// must always have an entry under "0" that defines the base name,
 	// e.g.  "0 : €" or "3 : k€". For BTC, would be "0 : BTC, -3 : mBTC".
 	// This way, we can also communicate the currency symbol to be used.
-  AltUnitNames map[int]string `json:"alt_unit_names"`
+	AltUnitNames map[int]string `json:"alt_unit_names"`
 }
 
-var Currencies = map[string]CurrencySpecification {
-	"KUDOS": CurrencySpecification{
-		Name: "KUDOS",
-		NumFractionalInputDigits: 2,
+var Currencies = map[string]CurrencySpecification{
+	"KUDOS": {
+		Name:                      "KUDOS",
+		NumFractionalInputDigits:  2,
 		NumFractionalNormalDigits: 2,
 		AltUnitNames: map[int]string{
 			0: "KUDOS",
 		},
 	},
-	"USD": CurrencySpecification{
-		Name: "US Dollar",
-		NumFractionalInputDigits: 2,
+	"USD": {
+		Name:                      "US Dollar",
+		NumFractionalInputDigits:  2,
 		NumFractionalNormalDigits: 2,
 		AltUnitNames: map[int]string{
 			0: "$",
 		},
 	},
-	"EUR": CurrencySpecification{
-		Name: "Euro",
-		NumFractionalInputDigits: 2,
+	"EUR": {
+		Name:                      "Euro",
+		NumFractionalInputDigits:  2,
 		NumFractionalNormalDigits: 2,
 		AltUnitNames: map[int]string{
 			0: "€",
 		},
 	},
-	"JPY": CurrencySpecification{
-		Name: "Japanese Yen",
-		NumFractionalInputDigits: 2,
+	"JPY": {
+		Name:                      "Japanese Yen",
+		NumFractionalInputDigits:  2,
 		NumFractionalNormalDigits: 0,
 		AltUnitNames: map[int]string{
 			0: "¥",
@@ -117,16 +117,16 @@ func NewAmount(currency string, value uint64, fraction uint64) Amount {
 	}
 }
 
-// FIXME also use allUnitNames.
+// FIXME also use altUnitNames.
 func (a *Amount) FormatWithCurrencySpecification(cf CurrencySpecification) (string, error) {
-	
+
 	if cf.NumFractionalNormalDigits == 0 {
 		return fmt.Sprintf("%s %d", cf.AltUnitNames[0], a.Value), nil
 	}
 	return fmt.Sprintf("%s %d.%0*d", cf.AltUnitNames[0], a.Value, cf.NumFractionalNormalDigits, a.Fraction/1e6), nil
 }
 
-func (a *Amount) Format() (string,error) {
+func (a *Amount) Format() (string, error) {
 	cf, idx := Currencies[a.Currency]
 	if idx {
 		return a.FormatWithCurrencySpecification(cf)
@@ -182,12 +182,13 @@ func (a *Amount) Add(b Amount) (*Amount, error) {
 	return &r, nil
 }
 
+// Amounts in GNU Taler must match this regular expression
+var rexAmount = regexp.MustCompile(`^\s*([-_*A-Za-z0-9]+):([0-9]+)\.?([0-9]+)?\s*$`)
+
 // Parses an amount string in the format <currency>:<value>[.<fraction>]
 func ParseAmount(s string) (*Amount, error) {
-	re, err := regexp.Compile(`^\s*([-_*A-Za-z0-9]+):([0-9]+)\.?([0-9]+)?\s*$`)
-	parsed := re.FindStringSubmatch(s)
-
-	if nil != err {
+	parsed := rexAmount.FindStringSubmatch(s)
+	if nil == parsed {
 		return nil, errors.New(fmt.Sprintf("invalid amount: %s", s))
 	}
 	tail := "0.0"

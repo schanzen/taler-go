@@ -1,28 +1,25 @@
 package util
 
 import (
-	"testing"
 	"fmt"
+	"testing"
 )
 
 var a = Amount{
 	Currency: "EUR",
-	Value: 1,
+	Value:    1,
 	Fraction: 50000000,
 }
 var b = Amount{
 	Currency: "EUR",
-	Value: 23,
+	Value:    23,
 	Fraction: 70007000,
 }
 var c = Amount{
 	Currency: "EUR",
-	Value: 25,
+	Value:    25,
 	Fraction: 20007000,
 }
-
-
-
 
 func TestAmountAdd(t *testing.T) {
 	d, err := a.Add(b)
@@ -55,9 +52,9 @@ func TestAmountLarge(t *testing.T) {
 
 func TestAmountFormat(t *testing.T) {
 	var currencySpec = CurrencySpecification{
-		Name: "KUDOS",
+		Name:                      "KUDOS",
 		NumFractionalNormalDigits: 2,
-		AllUnitNames: map[int]string{
+		AltUnitNames: map[int]string{
 			0: "K",
 		},
 	}
@@ -65,23 +62,23 @@ func TestAmountFormat(t *testing.T) {
 	str, _ := x.FormatWithCurrencySpecification(currencySpec)
 	if str != "K 50.20" {
 		fmt.Println(str)
-		t.Errorf("Failed")	
+		t.Errorf("Failed")
 	}
 	y, _ := ParseAmount("KUDOS:50.234")
 	str, _ = y.Format()
 	if str != "KUDOS 50.23" {
 		fmt.Println(str)
-		t.Errorf("Failed")	
+		t.Errorf("Failed")
 	}
 	y, _ = ParseAmount("EUR:50.234")
 	str, _ = y.Format()
 	if str != "€ 50.23" {
 		fmt.Println(str)
-		t.Errorf("Failed")	
+		t.Errorf("Failed")
 	}
 	y, _ = ParseAmount("FOO:50.234")
 	_, err := y.Format()
 	if nil == err {
-		t.Errorf("Failed")	
+		t.Errorf("Failed")
 	}
 }
