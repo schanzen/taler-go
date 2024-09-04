@@ -64,12 +64,6 @@ type PostOrderRequest struct {
 }
 
 type MinimalOrderDetail struct {
-	// Version 1 order support discounts and subscriptions.
-        // https://docs.taler.net/design-documents/046-mumimo-contracts.html
-	// @since protocol **vSUBSCRIBE**
-	// Optional, defaults to 0 if not set.
-	Version int64 `json:"version"`
-
 	// Amount to be paid by the customer.
 	Amount string `json:"amount"`
 
@@ -200,7 +194,6 @@ func (m *Merchant) AddNewOrder(cost util.Amount, summary string, fulfillment_url
 	var orderDetail MinimalOrderDetail
 	var orderResponse PostOrderResponse
 	orderDetail.Amount = cost.String()
-	orderDetail.Version = 0;
 	// FIXME get from cfg
 	orderDetail.Summary = summary
 	orderDetail.FulfillmentUrl = fulfillment_url
