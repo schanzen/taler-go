@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/schanzen/taler-go/pkg/util"
@@ -64,6 +64,12 @@ type PostOrderRequest struct {
 }
 
 type MinimalOrderDetail struct {
+	// Version 1 order support discounts and subscriptions.
+        // https://docs.taler.net/design-documents/046-mumimo-contracts.html
+	// @since protocol **vSUBSCRIBE**
+	// Optional, defaults to 0 if not set.
+	Version int64 `json:"version"`
+
 	// Amount to be paid by the customer.
 	Amount string `json:"amount"`
 
@@ -124,7 +130,16 @@ func NewMerchant(merchBaseUrlPrivate string, merchAccessToken string) Merchant {
 	}
 }
 
-func (m *Merchant) IsOrderPaid(orderId string) (int,  string, error) {
+type PaymentStatus string
+
+const (
+	OrderStatusUnknown = ""
+	OrderPaid = "paid"
+	OrderUnpaid = "unpaid"
+	OrderClaimed = "claimed"
+)
+
+func (m *Merchant) IsOrderPaid(orderId string) (int, PaymentStatus, string, error) {
 	var orderPaidResponse CheckPaymentStatusResponse
 	var paytoResponse CheckPaymentPaytoResponse
 	client := &http.Client{}
@@ -133,26 +148,26 @@ func (m *Merchant) IsOrderPaid(orderId string) (int,  string, error) {
 	resp, err := client.Do(req)
 	fmt.Println(req)
 	if nil != err {
-		return resp.StatusCode, "", err
+		return resp.StatusCode, OrderStatusUnknown, "", err
 	}
 	defer resp.Body.Close()
 	if http.StatusOK != resp.StatusCode {
 		message := fmt.Sprintf("Expected response code %d. Got %d", http.StatusOK, resp.StatusCode)
-		return resp.StatusCode, "", errors.New(message)
+		return resp.StatusCode, OrderStatusUnknown, "", errors.New(message)
 	}
-	respData, err := ioutil.ReadAll(resp.Body)
+	respData, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return resp.StatusCode, "", err
+		return resp.StatusCode, OrderStatusUnknown, "", err
 	}
 	err = json.NewDecoder(bytes.NewReader(respData)).Decode(&orderPaidResponse)
 	if err != nil {
-		return resp.StatusCode, "", err
+		return resp.StatusCode, OrderStatusUnknown, "", err
 	}
-	if orderPaidResponse.OrderStatus != "paid" {
+	if orderPaidResponse.OrderStatus == "unpaid" {
 		err = json.NewDecoder(bytes.NewReader(respData)).Decode(&paytoResponse)
-		return resp.StatusCode, paytoResponse.TalerPayUri, err
+		return resp.StatusCode, PaymentStatus(orderPaidResponse.OrderStatus), paytoResponse.TalerPayUri, err
 	}
-	return resp.StatusCode, "", nil
+	return resp.StatusCode, PaymentStatus(orderPaidResponse.OrderStatus), "", nil
 }
 
 func (m *Merchant) GetConfig() (*MerchantConfig, error) {
@@ -185,6 +200,7 @@ func (m *Merchant) AddNewOrder(cost util.Amount, summary string, fulfillment_url
 	var orderDetail MinimalOrderDetail
 	var orderResponse PostOrderResponse
 	orderDetail.Amount = cost.String()
+	orderDetail.Version = 0;
 	// FIXME get from cfg
 	orderDetail.Summary = summary
 	orderDetail.FulfillmentUrl = fulfillment_url
