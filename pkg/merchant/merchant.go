@@ -184,7 +184,7 @@ func (m *Merchant) GetConfig() (*MerchantConfig, error) {
 		message := fmt.Sprintf("Expected response code %d. Got %d", http.StatusOK, resp.StatusCode)
 		return nil, errors.New(message)
 	}
-	respData, err := ioutil.ReadAll(resp.Body)
+	respData, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
