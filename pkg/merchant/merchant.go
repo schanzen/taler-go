@@ -224,7 +224,6 @@ func (m *Merchant) IsOrderPaid(orderId string) (int, PaymentStatus, string, erro
 	req, _ := http.NewRequest("GET", m.BaseUrlPrivate+"/private/orders/"+orderId, nil)
 	req.Header.Set("Authorization", "Bearer secret-token:"+m.AccessToken)
 	resp, err := client.Do(req)
-	fmt.Println(req)
 	if nil != err {
 		return resp.StatusCode, OrderStatusUnknown, "", err
 	}
