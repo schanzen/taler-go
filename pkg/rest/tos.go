@@ -2,10 +2,10 @@ package tos
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"mime"
 	"net/http"
+	"os"
 	"strings"
 
 	"golang.org/x/text/language"
@@ -30,7 +30,7 @@ func ServiceTermsResponse(s *ini.Section, w http.ResponseWriter, r *http.Request
 			for _, ext := range extensions {
 				docFile := fmt.Sprintf("%s/%s/0%s", termsLocation, lang.String(), ext)
 				log.Printf("Trying %s\n", docFile)
-				fileBytes, err := ioutil.ReadFile(docFile)
+				fileBytes, err := os.ReadFile(docFile)
 				if nil == err {
 					w.Header().Set("Content-Type", fileType)
 					w.Write(fileBytes)
@@ -45,7 +45,7 @@ func ServiceTermsResponse(s *ini.Section, w http.ResponseWriter, r *http.Request
 	for _, ext := range extensions {
 		docFile := fmt.Sprintf("%s/%s/0%s", termsLocation, defaultLanguage, ext)
 		log.Println("Trying " + docFile)
-		fileBytes, err := ioutil.ReadFile(docFile)
+		fileBytes, err := os.ReadFile(docFile)
 		if nil == err {
 			w.Header().Set("Content-Type", fileType)
 			w.Write(fileBytes)
@@ -73,7 +73,7 @@ func PrivacyPolicyResponse(s *ini.Section, w http.ResponseWriter, r *http.Reques
 			for _, ext := range extensions {
 				docFile := fmt.Sprintf("%s/%s/0%s", termsLocation, lang.String(), ext)
 				log.Printf("Trying %s\n", docFile)
-				fileBytes, err := ioutil.ReadFile(docFile)
+				fileBytes, err := os.ReadFile(docFile)
 				if nil == err {
 					w.Header().Set("Content-Type", fileType)
 					w.Write(fileBytes)
@@ -87,7 +87,7 @@ func PrivacyPolicyResponse(s *ini.Section, w http.ResponseWriter, r *http.Reques
 	extensions, _ := mime.ExtensionsByType(fileType)
 	for _, ext := range extensions {
 		docFile := fmt.Sprintf("%s/%s/0%s", termsLocation, defaultLanguage, ext)
-		fileBytes, err := ioutil.ReadFile(docFile)
+		fileBytes, err := os.ReadFile(docFile)
 		if nil == err {
 			w.Header().Set("Content-Type", fileType)
 			w.Write(fileBytes)
