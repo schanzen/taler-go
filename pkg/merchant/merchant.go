@@ -11,7 +11,7 @@ import (
 	"github.com/schanzen/taler-go/pkg/util"
 )
 
-type MerchantConfig struct{
+type MerchantConfig struct {
 	// Default currency
 	Currency string `json:"currency"`
 
@@ -28,7 +28,7 @@ type MerchantConfig struct{
 type PostOrderRequest struct {
 	// The order must at least contain the minimal
 	// order detail, but can override all.
-	Order MinimalOrderDetail `json:"order"`
+	Order CommonOrder `json:"order"`
 
 	// If set, the backend will then set the refund deadline to the current
 	// time plus the specified delay.  If it's not set, refunds will not be
@@ -63,16 +63,100 @@ type PostOrderRequest struct {
 	CreateToken bool `json:"create_token,omitempty"`
 }
 
-type MinimalOrderDetail struct {
-	// Amount to be paid by the customer.
+type CommonOrder struct {
+	// Total price for the transaction. The exchange will subtract deposit
+	// fees from that amount before transferring it to the merchant.
 	Amount string `json:"amount"`
 
-	// Short summary of the order.
-	Summary string `json:"summary"`
+	// Maximum total deposit fee accepted by the merchant for this contract.
+	// Overrides defaults of the merchant instance.
+	MaxFee string `json:"max_fee,omitempty"`
 
-	// See documentation of fulfillment_url in ContractTerms.
+	// Human-readable description of the whole purchase.
+	Summary string
+
+	// Map from IETF BCP 47 language tags to localized summaries.
+	SummaryI18n string `json:"summary_i18n,omitempty"`
+
+	// Unique identifier for the order. Only characters
+	// allowed are "A-Za-z0-9" and ".:_-".
+	// Must be unique within a merchant instance.
+	// For merchants that do not store proposals in their DB
+	// before the customer paid for them, the order_id can be used
+	// by the frontend to restore a proposal from the information
+	// encoded in it (such as a short product identifier and timestamp).
+	OrderId string `json:"order_id,omitempty"`
+
+	// URL where the same contract could be ordered again (if
+	// available). Returned also at the public order endpoint
+	// for people other than the actual buyer (hence public,
+	// in case order IDs are guessable).
+	PublicReorderUrl string `json:"public_reorder_url,omitempty"`
+
+	// See documentation of fulfillment_url field in ContractTerms.
 	// Either fulfillment_url or fulfillment_message must be specified.
-	FulfillmentUrl string `json:"fulfillment_url"`
+	// When creating an order, the fulfillment URL can
+	// contain ${ORDER_ID} which will be substituted with the
+	// order ID of the newly created order.
+	FulfillmentUrl string `json:"fulfillment_url,omitempty"`
+
+	// See documentation of fulfillment_message in ContractTerms.
+	// Either fulfillment_url or fulfillment_message must be specified.
+	FulfillmentMessage string `json:"fulfillment_message,omitempty"`
+
+	// Map from IETF BCP 47 language tags to localized fulfillment
+	// messages.
+	FulfillmentMessageI18n string `json:"fulfillment_message_i18n,omitempty"`
+
+	// Minimum age the buyer must have to buy.
+	MinimumAge *uint64 `json:"minimum_age,omitempty"`
+
+	// List of products that are part of the purchase.
+	//products?: Product[];
+
+	// Time when this contract was generated. If null, defaults to current
+	// time of merchant backend.
+	Timestamp *uint64 `json:"timestamp,omitempty"`
+
+	// After this deadline has passed, no refunds will be accepted.
+	// Overrides deadline calculated from refund_delay in
+	// PostOrderRequest.
+	RefundDeadline *uint64 `json:"refund_deadline,omitempty"`
+
+	// After this deadline, the merchant won't accept payments for the contract.
+	// Overrides deadline calculated from default pay delay configured in
+	// merchant backend.
+	PayDeadline *uint64 `json:"pay_deadline,omitempty"`
+
+	// Transfer deadline for the exchange. Must be in the deposit permissions
+	// of coins used to pay for this order.
+	// Overrides deadline calculated from default wire transfer delay
+	// configured in merchant backend. Must be after refund deadline.
+	WireTransferDeadline *uint64 `json:"wire_transfer_deadline,omitempty"`
+
+	// Base URL of the (public!) merchant backend API.
+	// Must be an absolute URL that ends with a slash.
+	// Defaults to the base URL this request was made to.
+	MerchantBaseUrl string `json:"merchant_base_url,omitempty"`
+
+	// Delivery location for (all!) products.
+	//DeliveryLocation?: Location;
+
+	// Time indicating when the order should be delivered.
+	// May be overwritten by individual products.
+	// Must be in the future.
+	DeliveryDate *uint64 `json:"delivery_deadline,omitempty"`
+
+	// See documentation of auto_refund in ContractTerms.
+	// Specifies for how long the wallet should try to get an
+	// automatic refund for the purchase.
+	AutoRefund *uint64 `json:"auto_refund,omitempty"`
+
+	// Extra data that is only interpreted by the merchant frontend.
+	// Useful when the merchant needs to store extra information on a
+	// contract without storing it separately in their database.
+	// Must really be an Object (not a string, integer, float or array).
+	Extra string
 }
 
 // NOTE: Part of the above but optional
@@ -128,9 +212,9 @@ type PaymentStatus string
 
 const (
 	OrderStatusUnknown = ""
-	OrderPaid = "paid"
-	OrderUnpaid = "unpaid"
-	OrderClaimed = "claimed"
+	OrderPaid          = "paid"
+	OrderUnpaid        = "unpaid"
+	OrderClaimed       = "claimed"
 )
 
 func (m *Merchant) IsOrderPaid(orderId string) (int, PaymentStatus, string, error) {
@@ -189,9 +273,34 @@ func (m *Merchant) GetConfig() (*MerchantConfig, error) {
 	return &configResponse, nil
 }
 
+func (m *Merchant) CreateOrder(order CommonOrder) (string, error) {
+	var newOrder PostOrderRequest
+	var orderResponse PostOrderResponse
+	newOrder.Order = order
+	reqString, err := json.Marshal(newOrder)
+	if nil != err {
+		return "", err
+	}
+	client := &http.Client{}
+	req, _ := http.NewRequest(http.MethodPost, m.BaseUrlPrivate+"/private/orders", bytes.NewReader(reqString))
+	req.Header.Set("Authorization", "Bearer secret-token:"+m.AccessToken)
+	resp, err := client.Do(req)
+
+	if nil != err {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if http.StatusOK != resp.StatusCode {
+		message := fmt.Sprintf("Expected response code %d. Got %d. With request %s", http.StatusOK, resp.StatusCode, reqString)
+		return "", errors.New(message)
+	}
+	err = json.NewDecoder(resp.Body).Decode(&orderResponse)
+	return orderResponse.OrderId, err
+}
+
 func (m *Merchant) AddNewOrder(cost util.Amount, summary string, fulfillment_url string) (string, error) {
 	var newOrder PostOrderRequest
-	var orderDetail MinimalOrderDetail
+	var orderDetail CommonOrder
 	var orderResponse PostOrderResponse
 	orderDetail.Amount = cost.String()
 	// FIXME get from cfg
