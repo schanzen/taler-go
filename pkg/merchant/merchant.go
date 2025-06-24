@@ -73,7 +73,7 @@ type CommonOrder struct {
 	MaxFee string `json:"max_fee,omitempty"`
 
 	// Human-readable description of the whole purchase.
-	Summary string
+	Summary string `json:"summary"`
 
 	// Map from IETF BCP 47 language tags to localized summaries.
 	SummaryI18n string `json:"summary_i18n,omitempty"`
@@ -252,7 +252,6 @@ func (m *Merchant) GetConfig() (*MerchantConfig, error) {
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", m.BaseUrlPrivate+"/config", nil)
 	resp, err := client.Do(req)
-	fmt.Println(req)
 	if nil != err {
 		return nil, err
 	}
