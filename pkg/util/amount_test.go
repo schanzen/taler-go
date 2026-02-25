@@ -34,19 +34,21 @@ func TestAmountAdd(t *testing.T) {
 func TestAmountSub(t *testing.T) {
 	d, err := c.Sub(b)
 	if err != nil {
-		t.Errorf("Failed substracting amount")
+		t.Errorf("Failed subtracting amount")
 	}
 	if a.String() != d.String() {
-		t.Errorf("Failed to substract to correct amount")
+		t.Errorf("Failed to subtract to correct amount")
 	}
 }
 
 func TestAmountLarge(t *testing.T) {
 	x, err := ParseAmount("EUR:50")
+	if nil != err {
+		panic(err)
+	}
 	_, err = x.Add(a)
 	if nil != err {
-		fmt.Println(err)
-		t.Errorf("Failed")
+		panic(err)
 	}
 }
 
