@@ -44,11 +44,11 @@ func TestAmountSub(t *testing.T) {
 func TestAmountLarge(t *testing.T) {
 	x, err := ParseAmount("EUR:50")
 	if nil != err {
-		panic(err)
+		t.Errorf("Failed parsing amount")
 	}
 	_, err = x.Add(a)
 	if nil != err {
-		panic(err)
+		t.Errorf("Failed adding amount")
 	}
 }
 
