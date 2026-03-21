@@ -20,6 +20,7 @@ package util
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -43,15 +44,23 @@ func (c *TalerConfiguration) GetString(section string, key string, fallback stri
 	return value
 }
 
-func (c *TalerConfiguration) GetDuration(section string, key string, fallback time.Duration) time.Duration {
+func (c *TalerConfiguration) GetAmount(section string, key string, fallback *Amount) (*Amount, error) {
+	value := c.GetString(section, key, "")
+	d, err := ParseAmount(value)
+	if err != nil {
+		return fallback, fmt.Errorf("failed to parse %s as amount", value)
+	}
+	return d, nil
+}
+
+func (c *TalerConfiguration) GetDuration(section string, key string, fallback time.Duration) (time.Duration, error) {
 	value := c.GetString(section, key, "")
 	d, err := time.ParseDuration(value)
 	if err != nil {
-		return fallback
+		return fallback, fmt.Errorf("failed to parse %s as duration", value)
 	}
-	return d
+	return d, nil
 }
-
 
 func (c *TalerConfiguration) GetBool(section string, key string, fallback bool) bool {
 	value, err := c.Ini.Section(section).Key(strings.ToUpper(key)).Bool()
@@ -60,7 +69,6 @@ func (c *TalerConfiguration) GetBool(section string, key string, fallback bool) 
 	}
 	return value
 }
-
 
 func (c *TalerConfiguration) GetInt64(section string, key string, fallback int64) int64 {
 	value, err := c.Ini.Section(section).Key(strings.ToUpper(key)).Int64()
@@ -93,6 +101,17 @@ func getFileName(prefixPath string, relativeFileName string) string {
 func (c *TalerConfiguration) GetFilename(section string, key string, fallback string, prefixPath string) string {
 	value := c.GetString(section, key, fallback)
 	return getFileName(prefixPath, value)
+}
+
+func (c *TalerConfiguration) IterateSections(sectionPrefix string) []string {
+	result := make([]string, 0)
+	for _, sec := range c.Ini.Sections() {
+		if !strings.HasPrefix(sec.Name(), sectionPrefix) {
+			continue
+		}
+		result = append(result, sec.Name())
+	}
+	return result
 }
 
 func LoadConfiguration(file string) (TalerConfiguration, error) {
